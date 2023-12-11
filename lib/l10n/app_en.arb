@@ -1,0 +1,17 @@
+{ 
+ "main_appbar": "Order your dream kitchen",
+ "main_button": "Click on the button",
+ "main_description" : "Tired of your old kitchen? Order a new one from us! Click on the big orange button and get advice from our sales manager. He will create a kitchen project for you and show you a render of the future kitchen. Order your kitchen today and enjoy it tomorrow!",
+ "call_loading": "We are waiting for the sales manager to connect",
+ "review_main": "How did everything go? Share your impressions with us, it is important to us",
+ "review_very_bad": "Terrible",
+ "review_bad": "Badly",
+ "review_normal": "Normal",
+ "review_good": "Good",
+ "review_very_good": "Great",
+ "modal_appbar": "Please enter your phone number",
+ "modal_description": "Consenting to store your phone number allows you to regain access to your account and receive important updates and notifications",
+ "modal_contract": "I agree to the processing of personal data",
+ "modal_button_send": "Send number",
+ "modal_button_close": "Cancel"
+}
