@@ -217,12 +217,12 @@ class _BrDropdownState extends State<BrDropdown> {
                         isDismissible: true,
                         backgroundColor: Colors.transparent,
                         context: context,
-                        builder: (context) => WillPopScope(
-                          onWillPop: () async {
+                        builder: (context) => PopScope(
+                          onPopInvoked: (a) async {
                             setState(() {
                               isDropped = false;
                             });
-                            return true;
+                            return ;
                           },
                           child: Material(
                             color: Colors.transparent,

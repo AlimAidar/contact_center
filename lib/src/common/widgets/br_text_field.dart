@@ -18,6 +18,7 @@ class BrTextField extends StatefulWidget {
     this.inputFormatters,
     this.textInputType,
     this.preffixIcon,
+    this.isExpanded = false,
   }) : super(key: key);
 
   final String? placeholder;
@@ -34,6 +35,7 @@ class BrTextField extends StatefulWidget {
   final TextStyle? labelStyle;
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? textInputType;
+  final bool isExpanded;
 
   @override
   State<BrTextField> createState() => _BrTextFieldState();
@@ -43,6 +45,7 @@ class _BrTextFieldState extends State<BrTextField> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: widget.isExpanded ? 500 : null,
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(15)),
       child: TextFormField(

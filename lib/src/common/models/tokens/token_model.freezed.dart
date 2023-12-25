@@ -80,11 +80,11 @@ class _$TokenModelCopyWithImpl<$Res, $Val extends TokenModel>
 }
 
 /// @nodoc
-abstract class _$$_TokenModelCopyWith<$Res>
+abstract class _$$TokenModelImplCopyWith<$Res>
     implements $TokenModelCopyWith<$Res> {
-  factory _$$_TokenModelCopyWith(
-          _$_TokenModel value, $Res Function(_$_TokenModel) then) =
-      __$$_TokenModelCopyWithImpl<$Res>;
+  factory _$$TokenModelImplCopyWith(
+          _$TokenModelImpl value, $Res Function(_$TokenModelImpl) then) =
+      __$$TokenModelImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -94,11 +94,11 @@ abstract class _$$_TokenModelCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_TokenModelCopyWithImpl<$Res>
-    extends _$TokenModelCopyWithImpl<$Res, _$_TokenModel>
-    implements _$$_TokenModelCopyWith<$Res> {
-  __$$_TokenModelCopyWithImpl(
-      _$_TokenModel _value, $Res Function(_$_TokenModel) _then)
+class __$$TokenModelImplCopyWithImpl<$Res>
+    extends _$TokenModelCopyWithImpl<$Res, _$TokenModelImpl>
+    implements _$$TokenModelImplCopyWith<$Res> {
+  __$$TokenModelImplCopyWithImpl(
+      _$TokenModelImpl _value, $Res Function(_$TokenModelImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -108,7 +108,7 @@ class __$$_TokenModelCopyWithImpl<$Res>
     Object? tokenType = null,
     Object? expiresIn = null,
   }) {
-    return _then(_$_TokenModel(
+    return _then(_$TokenModelImpl(
       accessToken: null == accessToken
           ? _value.accessToken
           : accessToken // ignore: cast_nullable_to_non_nullable
@@ -127,14 +127,14 @@ class __$$_TokenModelCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_TokenModel implements _TokenModel {
-  _$_TokenModel(
+class _$TokenModelImpl implements _TokenModel {
+  _$TokenModelImpl(
       {@JsonKey(name: 'access_token') required this.accessToken,
       @JsonKey(name: 'token_type') required this.tokenType,
       @JsonKey(name: 'expires_in') required this.expiresIn});
 
-  factory _$_TokenModel.fromJson(Map<String, dynamic> json) =>
-      _$$_TokenModelFromJson(json);
+  factory _$TokenModelImpl.fromJson(Map<String, dynamic> json) =>
+      _$$TokenModelImplFromJson(json);
 
   @override
   @JsonKey(name: 'access_token')
@@ -155,7 +155,7 @@ class _$_TokenModel implements _TokenModel {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_TokenModel &&
+            other is _$TokenModelImpl &&
             (identical(other.accessToken, accessToken) ||
                 other.accessToken == accessToken) &&
             (identical(other.tokenType, tokenType) ||
@@ -172,12 +172,12 @@ class _$_TokenModel implements _TokenModel {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_TokenModelCopyWith<_$_TokenModel> get copyWith =>
-      __$$_TokenModelCopyWithImpl<_$_TokenModel>(this, _$identity);
+  _$$TokenModelImplCopyWith<_$TokenModelImpl> get copyWith =>
+      __$$TokenModelImplCopyWithImpl<_$TokenModelImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_TokenModelToJson(
+    return _$$TokenModelImplToJson(
       this,
     );
   }
@@ -188,10 +188,10 @@ abstract class _TokenModel implements TokenModel {
           {@JsonKey(name: 'access_token') required final String accessToken,
           @JsonKey(name: 'token_type') required final String tokenType,
           @JsonKey(name: 'expires_in') required final int expiresIn}) =
-      _$_TokenModel;
+      _$TokenModelImpl;
 
   factory _TokenModel.fromJson(Map<String, dynamic> json) =
-      _$_TokenModel.fromJson;
+      _$TokenModelImpl.fromJson;
 
   @override
   @JsonKey(name: 'access_token')
@@ -204,6 +204,6 @@ abstract class _TokenModel implements TokenModel {
   int get expiresIn;
   @override
   @JsonKey(ignore: true)
-  _$$_TokenModelCopyWith<_$_TokenModel> get copyWith =>
+  _$$TokenModelImplCopyWith<_$TokenModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

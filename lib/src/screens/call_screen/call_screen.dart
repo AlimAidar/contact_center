@@ -1,19 +1,26 @@
+import 'dart:developer';
+
 import 'package:card_swiper/card_swiper.dart';
 import 'package:contact_center/l10n/all_locales.dart';
 import 'package:contact_center/l10n/local_provider.dart';
-import 'package:contact_center/src/common/blocks/bloc/login_bloc.dart';
 import 'package:contact_center/src/common/blocks/cubit/call_cubit.dart';
 import 'package:contact_center/src/common/blocks/cubit/connect_cubit.dart';
 import 'package:contact_center/src/common/constants/color_constants.dart';
 import 'package:contact_center/src/common/constants/text_styles.dart';
+import 'package:contact_center/src/common/local/expectation_args.dart';
 import 'package:contact_center/src/common/local/function/soket_connect.dart';
+import 'package:contact_center/src/common/models/meeting/meeting_model.dart';
 import 'package:contact_center/src/common/router/routing_constant.dart';
 import 'package:contact_center/src/common/services/signalling.service.dart';
 import 'package:contact_center/src/common/widgets/br_button.dart';
 import 'package:contact_center/src/common/widgets/br_divider.dart';
 import 'package:contact_center/src/common/widgets/br_text_field.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:hive/hive.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -21,8 +28,20 @@ import 'package:provider/provider.dart';
 class CallScreen extends StatefulWidget {
   const CallScreen({
     Key? key,
+    required this.pageViewController,
+    required this.localRTCVideoRenderer,
+    required this.remoteRTCVideoRenderer,
+    required this.remoteRTCVideoRendererScreen,
+    required this.model,
   }) : super(key: key);
 
+  final MeetingModel model;
+  final PageController pageViewController;
+  final RTCVideoRenderer localRTCVideoRenderer;
+
+  // videoRenderer for remotePeer
+  final RTCVideoRenderer remoteRTCVideoRenderer;
+  final RTCVideoRenderer remoteRTCVideoRendererScreen;
   @override
   State<CallScreen> createState() => _CallScreenState();
 }
@@ -33,33 +52,130 @@ class _CallScreenState extends State<CallScreen> {
     'assets/gallery/gellary_item_2.png',
     'assets/gallery/gellary_item_3.png',
   ];
-  bool numberModal = false;
   TextEditingController controller = TextEditingController();
 
-// generate callerID of local user
-  @override
-  void initState() {
-    context.read<LoginBloc>().add(
-          LoginPressed(
-            email: 'touchpoint',
-            password: '670894439',
-          ),
-        );
+  // _setupPeerConnection() async {
+  // _rtcPeerConnection = await createPeerConnection({
+  //   'iceServers': [
+  //     {
+  //       'urls': "turn:77.243.80.210:3478",
+  //       'credential': "123",
+  //       'username': "admin"
+  //     }
+  //   ]
+  // });
+  // socket!.on('disconnected', (data) {
+  //   log('$data otcluchil');
+  //   log('$managerSocketId pizdec');
+  //   if (managerSocketId == data) {
+  //     // disconnectFunction();
+  //   }
+  // });
 
-    super.initState();
-  }
+  // _localStream!.getAudioTracks().forEach((element) {
+  //   pageViewController.animateToPage(
+  //     1,
+  //     duration: const Duration(milliseconds: 100),
+  //     curve: Curves.ease,
+  //   );
+  // });
 
+  // socket!.on("mediaOffer", (data) async {
+  //   log("$data MediaOffersssssssssssssssssadasdasdasd");
+
+  //   if (managerSocketId == null) {
+  //     managerID = data['manager_id'];
+  //     managerSocketId = data['from'];
+  //   }
+  //   streamLabels = data['streamLabels'];
+  //   await _rtcPeerConnection!.setRemoteDescription(
+  //     RTCSessionDescription(data['offer']["sdp"], data['offer']["type"]),
+  //   );
+
+  //   RTCSessionDescription answer = await _rtcPeerConnection!
+  //       .createAnswer({'offerToReceiveAudio': 1, 'offerToReceiveVideo': 1});
+
+  //   // set SDP answer as localDescription for peerConnection
+  //   await _rtcPeerConnection!.setLocalDescription(answer);
+  //   // send SDP answer to remote peer over signalling
+  //   socket!.emit("mediaAnswer", {
+  //     "answer": answer.toMap(),
+  //     "from": socket!.id,
+  //     "to": data['from'],
+  //   });
+  // });
+  // socket!.on('mediaAnswer', (data) async {
+  //   await _rtcPeerConnection!.setRemoteDescription(data['answer']);
+  // });
+  // socket!.on('remotePeerIceCandidate', (data) async {
+  //   try {
+  //     RTCIceCandidate candidate = RTCIceCandidate(
+  //         data['candidate']['candidate'],
+  //         data['candidate']['sdpMid'],
+  //         data['candidate']['sdpMLineIndex']);
+  //     await _rtcPeerConnection!.addCandidate(candidate);
+  //   } catch (e) {
+  //     log(e.toString());
+  //   }
+  // });
+
+  // _rtcPeerConnection!.onIceCandidate = (RTCIceCandidate candidate) {
+  //   log('$candidate onIceCandidate');
+  //   socket!.emit(
+  //     "iceCandidate",
+  //     {"to": managerSocketId, "candidate": candidate.candidate},
+  //   );
+  // };
+  // // listen for remotePeer mediaTrack event
+  // _rtcPeerConnection!.onTrack = (event) {
+  //   pageViewController.animateToPage(
+  //     1,
+  //     duration: const Duration(milliseconds: 100),
+  //     curve: Curves.ease,
+  //   );
+  //   log('$event EventConnection');
+  //   MediaStream srcObject = event.streams[0];
+  //   log("${streamLabels.keys}"
+  //       'afadfadfdfasdfffffffffffffffffffffffffffffffffffffffff');
+  //   for (var key in streamLabels.keys) {
+  //     log(streamLabels[key]);
+  //     log('${srcObject.id} asdasdasd');
+  //     if (streamLabels[key] == srcObject.id) {
+  //       if (key == 'webcam') {
+  //         log(key + '     webcam       ');
+  //         _remoteRTCVideoRenderer.srcObject = srcObject;
+  //         setState(() {});
+  //       } else {
+  //         _remoteRTCVideoRendererScreen.srcObject = srcObject;
+  //         setState(() {});
+  //       }
+  //     }
+  //   }
+  // };
+  // }
+
+  // disconnectFunction() {
+  //   // _localRTCVideoRenderer.dispose();
+  //   _remoteRTCVideoRenderer.dispose();
+  //   _remoteRTCVideoRendererScreen.dispose();
+  //   // _localStream?.dispose();
+  //   // _rtcPeerConnection?.dispose();
+  //   // SignallingService.instance.disconnect();
+
+  //   Navigator.popAndPushNamed(
+  //     context,
+  //     RoutingConst.review,
+  //   );
   // }
 
   var maskFormatter = MaskTextInputFormatter(
-    mask: '+# (###) ###-##-##',
+    mask: '+7 (###) ###-##-##',
     filter: {"#": RegExp(r'[0-9]')},
     type: MaskAutoCompletionType.lazy,
   );
 
   int count = 0;
   String? language;
-  String languageImage = 'assets/russia.png';
 
   final SwiperController _swiperController = SwiperController();
 
@@ -77,6 +193,7 @@ class _CallScreenState extends State<CallScreen> {
                 ),
               ),
               child: ListView(
+                physics: const NeverScrollableScrollPhysics(),
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -89,21 +206,8 @@ class _CallScreenState extends State<CallScreen> {
                         SvgPicture.asset('assets/logo.svg'),
                         const Spacer(),
                         PopupMenuButton(
-                          offset: const Offset(-80, 70),
+                          offset: const Offset(-10, 40),
                           onSelected: (value) {
-                            if (value.countryCode == 'Русский') {
-                              setState(() {
-                                languageImage = 'assets/russia.png';
-                              });
-                            } else if (value.countryCode == 'Казакша') {
-                              setState(() {
-                                languageImage = 'assets/kazakh.png';
-                              });
-                            } else if (value.countryCode == "English") {
-                              setState(() {
-                                languageImage = 'assets/english.png';
-                              });
-                            }
                             setState(() {
                               language = value.countryCode;
                             });
@@ -112,6 +216,7 @@ class _CallScreenState extends State<CallScreen> {
                           },
                           itemBuilder: (BuildContext context) {
                             return AllLocales.all.map((Locale choice) {
+                              language = choice.countryCode;
                               return PopupMenuItem<Locale>(
                                 value: choice,
                                 child: Text(
@@ -122,46 +227,18 @@ class _CallScreenState extends State<CallScreen> {
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(360),
+                                borderRadius: BorderRadius.circular(10),
                                 color: AppColors.grey2,
                                 border: Border.all(color: AppColors.grey2)),
-                            padding: const EdgeInsets.all(5),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(360),
-                                    image: DecorationImage(
-                                      image: AssetImage(
-                                        languageImage,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(
-                                  width: 24,
-                                ),
-                                const Text(
-                                  'Язык: ',
-                                  style: TextStyle(
-                                    color: AppColors.orange,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w300,
-                                  ),
-                                ),
-                                Text(
-                                  language ?? 'Русский',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w300,
-                                  ),
-                                ),
-                                const SizedBox(
-                                  width: 24,
-                                ),
-                              ],
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 5),
+                            child: Text(
+                              language ??
+                                  AppLocalizations.of(context)!.language,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w300,
+                              ),
                             ),
                           ),
                         ),
@@ -232,6 +309,65 @@ class _CallScreenState extends State<CallScreen> {
                       const SizedBox(
                         height: 50,
                       ),
+                      // Container(
+                      //   margin: const EdgeInsets.symmetric(
+                      //     horizontal: 40,
+                      //   ),
+                      //   height: 500,
+                      //   decoration: BoxDecoration(
+                      //     borderRadius: BorderRadius.circular(12),
+                      //     color: Colors.grey,
+                      //   ),
+                      //   child: Stack(
+                      //     children: [
+                      //       ClipRRect(
+                      //         borderRadius: BorderRadius.circular(12),
+                      //         child: RTCVideoView(
+                      //           _remoteRTCVideoRenderer,
+                      //           objectFit: RTCVideoViewObjectFit
+                      //               .RTCVideoViewObjectFitCover,
+                      //         ),
+                      //       ),
+                      //       Positioned(
+                      //         right: 65,
+                      //         bottom: 65,
+                      //         child: SizedBox(
+                      //           height: 150,
+                      //           width: 150,
+                      //           child: ClipRRect(
+                      //             borderRadius: BorderRadius.circular(12),
+                      //             child: RTCVideoView(
+                      //               _localRTCVideoRenderer,
+                      //               mirror: true,
+                      //               objectFit: RTCVideoViewObjectFit
+                      //                   .RTCVideoViewObjectFitCover,
+                      //             ),
+                      //           ),
+                      //         ),
+                      //       ),
+                      //       Positioned(
+                      //         left: 398,
+                      //         bottom: 65,
+                      //         child: InkWell(
+                      //           onTap: () {
+                      //             // disconnectFunction();
+                      //           },
+                      //           child: SvgPicture.asset(
+                      //               'assets/icon/end_call_button.svg'),
+                      //         ),
+                      //       ),
+                      //       Positioned(
+                      //         left: 540,
+                      //         bottom: 65,
+                      //         child: InkWell(
+                      //           onTap: () {},
+                      //           child: SvgPicture.asset(
+                      //               'assets/icon/turn_off_micro.svg'),
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -330,10 +466,141 @@ class _CallScreenState extends State<CallScreen> {
                       // ),
                       InkWell(
                         onTap: () {
-                          socetConnect();
-                          setState(() {
-                            numberModal = true;
-                          });
+                          showCupertinoModalPopup(
+                            context: context,
+                            builder: (context) => Padding(
+                              padding: const EdgeInsets.only(
+                                left: 40,
+                                right: 40,
+                                bottom: 500,
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 68, vertical: 60),
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12)),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        // 'Укажите  ваш номер телефона',
+                                        AppLocalizations.of(context)!
+                                            .modal_appbar,
+                                        style: const TextStyle(
+                                          fontSize: 64,
+                                          fontWeight: FontWeight.w300,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(
+                                        height: 24,
+                                      ),
+                                      Text(
+                                        // 'Согласие на хранение номера телефона позволяет вам восстановить доступ к аккаунту и получать важные обновления и уведомления',
+                                        AppLocalizations.of(context)!
+                                            .modal_description,
+
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w300,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(
+                                        height: 97,
+                                      ),
+                                      BrTextField(
+                                        controller: controller,
+                                        lableText: '',
+                                        inputFormatters: [maskFormatter],
+                                        labelStyle: TextStyles.body
+                                            .copyWith(color: AppColors.grey),
+                                        textInputType: const TextInputType
+                                            .numberWithOptions(),
+                                      ),
+                                      const SizedBox(
+                                        height: 36,
+                                      ),
+                                      Text(
+                                        // 'Согласен на обработку персональных данных',
+                                        AppLocalizations.of(context)!
+                                            .modal_contract,
+
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.orange,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 97,
+                                      ),
+                                      const BrDivider(),
+                                      const SizedBox(
+                                        height: 60,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: BrButton(
+                                              color: Colors.white,
+                                              textColor: Colors.black,
+                                              borderColor: Colors.grey,
+                                              onPressed: () {
+                                                // SignallingService.instance
+                                                //     .disconnect();
+
+                                                // setState(() {
+                                                //   numberModal = false;
+                                                // });
+
+                                                Navigator.pop(context);
+                                              },
+                                              label:
+                                                  AppLocalizations.of(context)!
+                                                      .modal_button_close,
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            width: 60,
+                                          ),
+                                          Expanded(
+                                            child: BrButton(
+                                              onPressed: () async {
+                                                // setState(() {
+                                                //   numberModal = false;
+                                                // });
+                                                await navigatorFunction(
+                                                  context,
+                                                  controller,
+                                                  widget.model.idRoom ?? 'null',
+                                                  widget.localRTCVideoRenderer,
+                                                  widget.remoteRTCVideoRenderer,
+                                                  widget
+                                                      .remoteRTCVideoRendererScreen,
+                                                  widget.pageViewController,
+                                                  widget.model,
+                                                );
+                                                controller.clear();
+                                              },
+                                              label:
+                                                  AppLocalizations.of(context)!
+                                                      .modal_button_send,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
                         },
                         child: Container(
                           height: 300,
@@ -364,128 +631,6 @@ class _CallScreenState extends State<CallScreen> {
                 ],
               ),
             ),
-            numberModal
-                ? Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 68, vertical: 60),
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12)),
-                      margin: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            // 'Укажите  ваш номер телефона',
-                            AppLocalizations.of(context)!.modal_appbar,
-                            style: const TextStyle(
-                              fontSize: 64,
-                              fontWeight: FontWeight.w300,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(
-                            height: 24,
-                          ),
-                          Text(
-                            // 'Согласие на хранение номера телефона позволяет вам восстановить доступ к аккаунту и получать важные обновления и уведомления',
-                            AppLocalizations.of(context)!.modal_description,
-
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w300,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(
-                            height: 97,
-                          ),
-                          BrTextField(
-                            controller: controller,
-                            lableText: '',
-                            inputFormatters: [maskFormatter],
-                            labelStyle:
-                                TextStyles.body.copyWith(color: AppColors.grey),
-                            textInputType:
-                                const TextInputType.numberWithOptions(),
-                          ),
-                          const SizedBox(
-                            height: 36,
-                          ),
-                          Text(
-                            // 'Согласен на обработку персональных данных',
-                            AppLocalizations.of(context)!.modal_contract,
-
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.orange,
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 97,
-                          ),
-                          const BrDivider(),
-                          const SizedBox(
-                            height: 60,
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: BrButton(
-                                  color: Colors.white,
-                                  textColor: Colors.black,
-                                  borderColor: Colors.grey,
-                                  onPressed: () {
-                                    SignallingService.instance.disconnect();
-
-                                    setState(() {
-                                      numberModal = false;
-                                    });
-                                  },
-                                  label: AppLocalizations.of(context)!
-                                      .modal_button_close,
-                                ),
-                              ),
-                              const SizedBox(
-                                width: 60,
-                              ),
-                              Expanded(
-                                child: BrButton(
-                                  onPressed: () async {
-                                    setState(() {
-                                      numberModal = false;
-                                    });
-                                    context.read<CallCubit>().startCall(
-                                          controller.text.trim(),
-                                          SignallingService
-                                                  .instance.socket!.id ??
-                                              '',
-                                        );
-                                    context.read<ConnectCubit>().connect(
-                                          controller.text.trim(),
-                                          SignallingService
-                                                  .instance.socket!.id ??
-                                              '',
-                                        );
-                                    Navigator.pushNamed(
-                                      context,
-                                      RoutingConst.expectation,
-                                    );
-                                  },
-                                  label: AppLocalizations.of(context)!
-                                      .modal_button_send,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : const Offstage(),
           ],
         ),
       ),
@@ -498,4 +643,37 @@ class _CallScreenState extends State<CallScreen> {
 
     super.dispose();
   }
+}
+
+navigatorFunction(
+  BuildContext context,
+  TextEditingController controller,
+  String idRoom,
+  RTCVideoRenderer localRTCVideoRenderer,
+  RTCVideoRenderer remoteRTCVideoRenderer,
+  RTCVideoRenderer remoteRTCVideoRendererScreen,
+  PageController pageController,
+  MeetingModel model,
+) {
+  context.read<CallCubit>().startCall(
+        controller.text.trim(),
+        SignallingService.instance.socket!.id ?? '',
+        idRoom,
+      );
+  context.read<ConnectCubit>().connect(
+        controller.text.trim(),
+        SignallingService.instance.socket!.id ?? '',
+        idRoom,
+      );
+  Navigator.popAndPushNamed(
+    context,
+    RoutingConst.expectation,
+    arguments: ExpectationArgs(
+      mdoel: model,
+      localVideo: localRTCVideoRenderer,
+      remoteVideo: remoteRTCVideoRenderer,
+      remoteVideoScreen: remoteRTCVideoRendererScreen,
+      pageViewController: pageController,
+    ),
+  );
 }

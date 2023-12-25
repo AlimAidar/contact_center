@@ -19,7 +19,5 @@ initGetIt() {
   getIt.registerLazySingleton<ConnectService>(
     () => ConnectServiceImplement(brDio: getIt()),
   );
-  // getIt.registerLazySingleton<AuthCubitOut>(
-  //   () => AuthCubitOut(),
-  // );
+
 }

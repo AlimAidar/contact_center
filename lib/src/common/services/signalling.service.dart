@@ -28,8 +28,8 @@ class SignallingService {
     socket!.connect();
   }
 
-  disconnect() {
-    socket!.close();
-    log('disconnect');
-  }
+  // disconnect() {
+  //   socket!.close();
+  //   log('disconnect');
+  // }
 }

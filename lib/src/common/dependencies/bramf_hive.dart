@@ -7,6 +7,7 @@ Future<void> initHive() async {
   await Hive.openBox('tokens');
   await Hive.openBox('scan_mode');
   await Hive.openBox('user');
+  await Hive.openBox('meeting_model');
   // await Hive.openBox('segment_list');
   // await Hive.openBox('article_list');
   // await Hive.openBox('scan_mode');

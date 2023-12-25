@@ -1,8 +1,6 @@
-import 'dart:developer';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:contact_center/src/common/constants/color_constants.dart';
 import 'package:contact_center/src/common/router/routing_constant.dart';
-import 'package:contact_center/src/common/services/signalling.service.dart';
 import 'package:contact_center/src/common/widgets/gradient_selected_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -12,15 +10,23 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class ExpectationScreen extends StatefulWidget {
   const ExpectationScreen({
     Key? key,
+    required this.pageViewController,
+    required this.localRTCVideoRenderer,
+    required this.remoteRTCVideoRenderer,
+    required this.remoteRTCVideoRendererScreen,
   }) : super(key: key);
+  final PageController pageViewController;
+  final RTCVideoRenderer localRTCVideoRenderer;
+
+  // videoRenderer for remotePeer
+  final RTCVideoRenderer remoteRTCVideoRenderer;
+  final RTCVideoRenderer remoteRTCVideoRendererScreen;
 
   @override
   State<ExpectationScreen> createState() => _ExpectationScreenState();
 }
 
 class _ExpectationScreenState extends State<ExpectationScreen> {
-  final PageController pageViewController = PageController();
-
   List<Map> itemsManager = [
     {
       'image': 'assets/managers_photo/photo_1.png',
@@ -66,185 +72,189 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
     }
   ];
 
-  dynamic offer;
-  String? callerId;
-  String? calleeId;
+  // dynamic offer;
+  // String? callerId;
+  // String? calleeId;
   int selectedIndex = 0;
   int selectedTab = 0;
 
-  final socket = SignallingService.instance.socket;
-  final _localRTCVideoRenderer = RTCVideoRenderer();
+  // final socket = SignallingService.instance.socket;
+  // final _localRTCVideoRenderer = RTCVideoRenderer();
 
-  // videoRenderer for remotePeer
-  final _remoteRTCVideoRenderer = RTCVideoRenderer();
-  final _remoteRTCVideoRendererScreen = RTCVideoRenderer();
+  // // videoRenderer for remotePeer
+  // final _remoteRTCVideoRenderer = RTCVideoRenderer();
+  // final _remoteRTCVideoRendererScreen = RTCVideoRenderer();
 
-  // mediaStream for localPeer
-  List<Map> devicesId = [];
-  MediaStream? _localStream;
+  // // mediaStream for localPeer
+  // List<Map> devicesId = [];
+  // MediaStream? _localStream;
 
-  // RTC peer connection
-  RTCPeerConnection? _rtcPeerConnection;
+  // // RTC peer connection
+  // RTCPeerConnection? _rtcPeerConnection;
 
-  // list of rtcCandidates to be sent over signalling
+  // // list of rtcCandidates to be sent over signalling
 
-  String? managerSocketId;
-  int? managerID;
-  Map streamLabels = {};
+  // String? managerSocketId;
+  // int? managerID;
+  // Map streamLabels = {};
 
-  // media status
-  bool isAudioOn = true, isVideoOn = true, isFrontCameraSelected = true;
-  dynamic incomingSDPOffer;
-  @override
-  void initState() {
-    _localRTCVideoRenderer.initialize();
-    _remoteRTCVideoRendererScreen.initialize();
-    _remoteRTCVideoRenderer.initialize();
-    WidgetsFlutterBinding.ensureInitialized();
-    _setupPeerConnection();
+  // // media status
+  // bool isAudioOn = true, isVideoOn = true, isFrontCameraSelected = true;
+  // dynamic incomingSDPOffer;
+  // @override
+  // void initState() {
+  //   _localRTCVideoRenderer.initialize();
+  //   _remoteRTCVideoRendererScreen.initialize();
+  //   _remoteRTCVideoRenderer.initialize();
+  //   WidgetsFlutterBinding.ensureInitialized();
+  //   _setupPeerConnection();
 
-    super.initState();
-  }
+  //   super.initState();
+  // }
 
-  @override
-  void setState(fn) {
-    if (mounted) {
-      super.setState(fn);
-    }
-  }
+  // @override
+  // void setState(fn) {
+  //   if (mounted) {
+  //     super.setState(fn);
+  //   }
+  // }
 
-  _setupPeerConnection() async {
-    _rtcPeerConnection = await createPeerConnection({
-      'iceServers': [
-        {
-          'urls': "turn:77.243.80.210:3478",
-          'credential': "123",
-          'username': "admin"
-        }
-      ]
-    });
-    socket!.on('disconnected', (data) {
-      log('$data otcluchil');
-      log(managerSocketId.toString());
-      if (managerSocketId == data) {
-        disconnectFunction();
-      }
-    });
+  // _setupPeerConnection() async {
+  //   _rtcPeerConnection = await createPeerConnection({
+  //     'iceServers': [
+  //       {
+  //         'urls': "turn:77.243.80.210:3478",
+  //         'credential': "123",
+  //         'username': "admin"
+  //       }
+  //     ]
+  //   });
+  //   socket!.on('disconnected', (data) {
+  //     log('$data otcluchil');
+  //     log(managerSocketId.toString());
+  //     if (managerSocketId == data) {
+  //       disconnectFunction();
+  //     }
+  //   });
 
-    _localStream = await navigator.mediaDevices.getUserMedia({
-      'audio': isAudioOn,
-      'video': isVideoOn,
-    });
-    // _localStream!.getAudioTracks().forEach((element) {
-    //   pageViewController.animateToPage(
-    //     1,
-    //     duration: const Duration(milliseconds: 100),
-    //     curve: Curves.ease,
-    //   );
-    // });
-    _localStream!.getTracks().forEach((track) {
-      log('$track Track');
+  //   _localStream = await navigator.mediaDevices.getUserMedia({
+  //     'audio': isAudioOn,
+  //     'video': isVideoOn,
+  //   });
+  //   // _localStream!.getAudioTracks().forEach((element) {
+  //   //   pageViewController.animateToPage(
+  //   //     1,
+  //   //     duration: const Duration(milliseconds: 100),
+  //   //     curve: Curves.ease,
+  //   //   );
+  //   // });
+  //   _localStream!.getTracks().forEach((track) {
+  //     log('$track Track');
 
-      _rtcPeerConnection!.addTrack(track, _localStream!);
-    });
+  //     _rtcPeerConnection!.addTrack(track, _localStream!);
+  //   });
 
-    _localRTCVideoRenderer.srcObject = _localStream;
-    setState(() {});
+  //   _localRTCVideoRenderer.srcObject = _localStream;
+  //   setState(() {});
 
-    socket!.on("mediaOffer", (data) async {
-      log("$data MediaOffersssssssssssssssssadasdasdasd");
+  //   socket!.on("mediaOffer", (data) async {
+  //     log("$data MediaOffersssssssssssssssssadasdasdasd");
 
-      if (managerSocketId == null) {
-        managerID = data['manager_id'];
-        managerSocketId = data['from'];
-      }
-      streamLabels = data['streamLabels'];
-      await _rtcPeerConnection!.setRemoteDescription(
-        RTCSessionDescription(data['offer']["sdp"], data['offer']["type"]),
-      );
+  //     if (managerSocketId == null) {
+  //       managerID = data['manager_id'];
+  //       managerSocketId = data['from'];
+  //     }
+  //     streamLabels = data['streamLabels'];
+  //     await _rtcPeerConnection!.setRemoteDescription(
+  //       RTCSessionDescription(data['offer']["sdp"], data['offer']["type"]),
+  //     );
 
-      RTCSessionDescription answer = await _rtcPeerConnection!
-          .createAnswer({'offerToReceiveAudio': 1, 'offerToReceiveVideo': 1});
+  //     RTCSessionDescription answer = await _rtcPeerConnection!
+  //         .createAnswer({'offerToReceiveAudio': 1, 'offerToReceiveVideo': 1});
 
-      // set SDP answer as localDescription for peerConnection
-      await _rtcPeerConnection!.setLocalDescription(answer);
-      // send SDP answer to remote peer over signalling
-      socket!.emit("mediaAnswer", {
-        "answer": answer.toMap(),
-        "from": socket!.id,
-        "to": data['from'],
-      });
-    });
-    socket!.on('mediaAnswer', (data) async {
-      await _rtcPeerConnection!.setRemoteDescription(data['answer']);
-    });
-    socket!.on('remotePeerIceCandidate', (data) async {
-      try {
-        RTCIceCandidate candidate = RTCIceCandidate(
-            data['candidate']['candidate'],
-            data['candidate']['sdpMid'],
-            data['candidate']['sdpMLineIndex']);
-        await _rtcPeerConnection!.addCandidate(candidate);
-      } catch (e) {
-        log(e.toString());
-      }
-    });
+  //     // set SDP answer as localDescription for peerConnection
+  //     await _rtcPeerConnection!.setLocalDescription(answer);
+  //     // send SDP answer to remote peer over signalling
+  //     socket!.emit("mediaAnswer", {
+  //       "answer": answer.toMap(),
+  //       "from": socket!.id,
+  //       "to": data['from'],
+  //     });
+  //   });
+  //   socket!.on('mediaAnswer', (data) async {
+  //     await _rtcPeerConnection!.setRemoteDescription(data['answer']);
+  //   });
+  //   socket!.on('remotePeerIceCandidate', (data) async {
+  //     try {
+  //       RTCIceCandidate candidate = RTCIceCandidate(
+  //           data['candidate']['candidate'],
+  //           data['candidate']['sdpMid'],
+  //           data['candidate']['sdpMLineIndex']);
+  //       await _rtcPeerConnection!.addCandidate(candidate);
+  //     } catch (e) {
+  //       log(e.toString());
+  //     }
+  //   });
 
-    _rtcPeerConnection!.onIceCandidate = (RTCIceCandidate candidate) {
-      log('$candidate onIceCandidate');
-      socket!.emit(
-        "iceCandidate",
-        {"to": managerSocketId, "candidate": candidate.candidate},
-      );
-    };
-    // // listen for remotePeer mediaTrack event
-    _rtcPeerConnection!.onTrack = (event) {
-      pageViewController.animateToPage(
-        1,
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.ease,
-      );
-      log('$event EventConnection');
-      MediaStream srcObject = event.streams[0];
-      log("${streamLabels.keys}"
-          'afadfadfdfasdfffffffffffffffffffffffffffffffffffffffff');
-      for (var key in streamLabels.keys) {
-        log(streamLabels[key]);
-        log('${srcObject.id} asdasdasd');
-        if (streamLabels[key] == srcObject.id) {
-          if (key == 'webcam') {
-            log(key + '     webcam       ');
-            _remoteRTCVideoRenderer.srcObject = srcObject;
-            setState(() {});
-          } else {
-            _remoteRTCVideoRendererScreen.srcObject = srcObject;
-            setState(() {});
-          }
-        }
-      }
-    };
-  }
+  //   _rtcPeerConnection!.onIceCandidate = (RTCIceCandidate candidate) {
+  //     log('$candidate onIceCandidate');
+  //     socket!.emit(
+  //       "iceCandidate",
+  //       {"to": managerSocketId, "candidate": candidate.candidate},
+  //     );
+  //   };
+  //   // // listen for remotePeer mediaTrack event
+  //   _rtcPeerConnection!.onTrack = (event) {
+  //     pageViewController.animateToPage(
+  //       1,
+  //       duration: const Duration(milliseconds: 100),
+  //       curve: Curves.ease,
+  //     );
+  //     log('$event EventConnection');
+  //     MediaStream srcObject = event.streams[0];
+  //     log("${streamLabels.keys}"
+  //         'afadfadfdfasdfffffffffffffffffffffffffffffffffffffffff');
+  //     for (var key in streamLabels.keys) {
+  //       log(streamLabels[key]);
+  //       log('${srcObject.id} asdasdasd');
+  //       if (streamLabels[key] == srcObject.id) {
+  //         if (key == 'webcam') {
+  //           log(key + '     webcam       ');
+  //           _remoteRTCVideoRenderer.srcObject = srcObject;
+  //           setState(() {});
+  //         } else {
+  //           _remoteRTCVideoRendererScreen.srcObject = srcObject;
+  //           setState(() {});
+  //         }
+  //       }
+  //     }
+  //   };
+  // }
 
-  disconnectFunction() {
-    // _localRTCVideoRenderer.dispose();
-    _remoteRTCVideoRenderer.dispose();
-    _remoteRTCVideoRendererScreen.dispose();
-    // _localStream?.dispose();
-    // _rtcPeerConnection?.dispose();
-    SignallingService.instance.disconnect();
+  // disconnectFunction() {
+  //   // _localRTCVideoRenderer.dispose();
+  //   _remoteRTCVideoRenderer.dispose();
+  //   _remoteRTCVideoRendererScreen.dispose();
+  //   // _localStream?.dispose();
+  //   // _rtcPeerConnection?.dispose();
+  //   // SignallingService.instance.disconnect();
 
-    Navigator.popAndPushNamed(
-      context,
-      RoutingConst.review,
-    );
-  }
+  //   Navigator.popAndPushNamed(
+  //     context,
+  //     RoutingConst.review,
+  //   );
+  // }Р    Т
+  // ВКЛАДЫШИ 050
+  // ПОРШЕНЬ РЕМОНТНЫЙ
+  // ПРРОКЛАДКИ ВСЕ
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         body: PageView(
-          controller: pageViewController,
+          physics: const NeverScrollableScrollPhysics(),
+          controller: widget.pageViewController,
           children: [
             Container(
               decoration: const BoxDecoration(
@@ -274,6 +284,7 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
                         fontSize: 64,
                         fontWeight: FontWeight.w300,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   const SizedBox(
@@ -436,7 +447,7 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: RTCVideoView(
-                              _remoteRTCVideoRenderer,
+                              widget.remoteRTCVideoRenderer,
                               objectFit: RTCVideoViewObjectFit
                                   .RTCVideoViewObjectFitCover,
                             ),
@@ -450,7 +461,7 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: RTCVideoView(
-                                  _localRTCVideoRenderer,
+                                  widget.localRTCVideoRenderer,
                                   mirror: true,
                                   objectFit: RTCVideoViewObjectFit
                                       .RTCVideoViewObjectFitCover,
@@ -462,8 +473,10 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
                             left: 398,
                             bottom: 65,
                             child: InkWell(
-                              onTap: () {
-                                disconnectFunction();
+                              onTap: () async {
+                                await Navigator.popAndPushNamed(
+                                    context, RoutingConst.review);
+                                // disconnectFunction();
                               },
                               child: SvgPicture.asset(
                                   'assets/icon/end_call_button.svg'),
@@ -497,7 +510,7 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: RTCVideoView(
-                          _remoteRTCVideoRendererScreen,
+                          widget.remoteRTCVideoRendererScreen,
                           objectFit:
                               RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
                         ),
@@ -515,9 +528,9 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
                         const SizedBox(
                           height: 24,
                         ),
-                        const Text(
-                          'Выберете материал вашей будущей кухни',
-                          style: TextStyle(
+                        Text(
+                          AppLocalizations.of(context)!.material_main,
+                          style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w300,
                           ),
@@ -539,10 +552,10 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
                                 selectedIndex = value;
                               });
                             },
-                            tabs: const [
-                              'Фасады',
-                              'Фартук',
-                              'Столешница',
+                            tabs: [
+                              AppLocalizations.of(context)!.material_fartuk,
+                              AppLocalizations.of(context)!.material_furniture,
+                              AppLocalizations.of(context)!.material_table,
                             ],
                           ),
                         ),

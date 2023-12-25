@@ -1,13 +1,9 @@
-import 'package:contact_center/src/common/blocks/bloc/login_bloc.dart';
-import 'package:contact_center/src/common/blocks/cubit/call_cubit.dart';
-import 'package:contact_center/src/common/blocks/cubit/connect_cubit.dart';
-import 'package:contact_center/src/common/dependencies/injection_container.dart';
+import 'package:contact_center/src/common/local/expectation_args.dart';
 import 'package:contact_center/src/common/router/routing_constant.dart';
 import 'package:contact_center/src/screens/call_screen/call_screen.dart';
 import 'package:contact_center/src/screens/expectation/expectation_screen.dart';
 import 'package:contact_center/src/screens/review/review_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MetaRouter {
   static Route<dynamic>? onGenerateRoute(RouteSettings routeSettings) {
@@ -18,26 +14,27 @@ class MetaRouter {
           settings: routeSettings,
         );
       case RoutingConst.call:
+        ExpectationArgs args = routeSettings.arguments as ExpectationArgs;
+
         return MaterialPageRoute(
-          builder: (context) => MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (context) => LoginBloc(authService: getIt()),
-              ),
-              BlocProvider(
-                create: (context) => CallCubit(service: getIt()),
-              ),
-              BlocProvider(
-                create: (context) => ConnectCubit(service: getIt()),
-              ),
-            ],
-            child: const CallScreen(),
+          builder: (context) =>  CallScreen(
+            pageViewController: args.pageViewController,
+            remoteRTCVideoRenderer: args.remoteVideo,
+            localRTCVideoRenderer: args.localVideo,
+            remoteRTCVideoRendererScreen: args.remoteVideoScreen,
+            model: args.mdoel,
           ),
           settings: routeSettings,
         );
       case RoutingConst.expectation:
+        ExpectationArgs args = routeSettings.arguments as ExpectationArgs;
         return MaterialPageRoute(
-          builder: (context) => const ExpectationScreen(),
+          builder: (context) => ExpectationScreen(
+            pageViewController: args.pageViewController,
+            remoteRTCVideoRenderer: args.remoteVideo,
+            localRTCVideoRenderer: args.localVideo,
+            remoteRTCVideoRendererScreen: args.remoteVideoScreen,
+          ),
           settings: routeSettings,
         );
     }
