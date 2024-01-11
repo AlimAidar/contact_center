@@ -14,7 +14,7 @@ class ConnectServiceImplement extends ConnectService {
   @override
   Future<void> connect(String number, String idSocket, String idRoom) async {
     try {
-      Response res = await dio.post(
+       await dio.post(
         'websocket/manager/connect',
         queryParameters: {
           'phone_number': number,
@@ -23,7 +23,6 @@ class ConnectServiceImplement extends ConnectService {
           'id_room': idRoom,
         },
       );
-      print(res);
     } catch (e) {
       rethrow;
     }

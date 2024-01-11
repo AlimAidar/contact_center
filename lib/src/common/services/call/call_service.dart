@@ -11,10 +11,10 @@ class CallServiceImplement extends CallService {
   }
   late final Dio dio;
 
-  @override
+  @override 
   Future<void> postNumber(String number, String idSocket, String idRoom) async {
     try {
-     Response res = await dio.post(
+      await dio.post(
         'api/call/client/begin',
         queryParameters: {
           'phone_number': number,
@@ -23,10 +23,8 @@ class CallServiceImplement extends CallService {
           'id_room': idRoom,
         },
       );
-      print(res);
     } catch (e) {
       rethrow;
     }
   }
 }
-// ""4P7NmWczQWaJ0nAbAAjB""

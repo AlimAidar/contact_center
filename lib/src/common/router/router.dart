@@ -14,22 +14,18 @@ class MetaRouter {
           settings: routeSettings,
         );
       case RoutingConst.call:
-        ExpectationArgs args = routeSettings.arguments as ExpectationArgs;
-
         return MaterialPageRoute(
-          builder: (context) =>  CallScreen(
-            pageViewController: args.pageViewController,
-            remoteRTCVideoRenderer: args.remoteVideo,
-            localRTCVideoRenderer: args.localVideo,
-            remoteRTCVideoRendererScreen: args.remoteVideoScreen,
-            model: args.mdoel,
-          ),
+          builder: (context) => const CallScreen(
+              ),
           settings: routeSettings,
         );
       case RoutingConst.expectation:
         ExpectationArgs args = routeSettings.arguments as ExpectationArgs;
         return MaterialPageRoute(
           builder: (context) => ExpectationScreen(
+            managerData: args.managerData,
+            idRoom: args.idRoom,
+            creatorConnection: args.creatorConnection,
             pageViewController: args.pageViewController,
             remoteRTCVideoRenderer: args.remoteVideo,
             localRTCVideoRenderer: args.localVideo,
