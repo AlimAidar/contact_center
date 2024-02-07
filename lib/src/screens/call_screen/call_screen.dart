@@ -1,5 +1,6 @@
 import 'dart:convert';
-
+import 'dart:developer';
+import 'package:contact_center/src/common/models/manager/manager_list_model.dart';
 import 'package:contact_center/src/common/services/signalling.service.dart';
 import 'package:contact_center/src/common/local/function/soket_connect.dart';
 import 'package:contact_center/src/common/models/meeting/meeting_model.dart';
@@ -17,6 +18,7 @@ import 'package:contact_center/src/common/widgets/br_divider.dart';
 import 'package:contact_center/src/common/widgets/br_text_field.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter/material.dart';
@@ -40,10 +42,9 @@ class _CallScreenState extends State<CallScreen> {
     'assets/gallery/gellary_item_2.png',
     'assets/gallery/gellary_item_3.png',
   ];
-  TextEditingController controller = TextEditingController();
+  TextEditingController controllerNumber = TextEditingController();
+  TextEditingController controllerName = TextEditingController();
   dynamic offer;
-  String? callerId;
-  String? calleeId;
   final socket = SignallingService.instance.socket;
 
   final RTCVideoRenderer _localRTCVideoRenderer = RTCVideoRenderer();
@@ -52,14 +53,9 @@ class _CallScreenState extends State<CallScreen> {
 
   MediaStream? _localStream;
 
-  String? managerSocketId;
-  int? managerID;
-  Map streamLabels = {};
-
-  bool isAudioOn = true, isVideoOn = true, isFrontCameraSelected = true;
-  dynamic incomingSDPOffer;
-  PageController pageViewController = PageController(initialPage: 0);
-  PageController pageViewControllerLocal = PageController();
+  bool isAudioOn = true, isVideoOn = true;
+  PageController pageViewExpectation = PageController();
+  PageController callPageView = PageController();
   Dio dioCreate = Dio();
   Dio dioIcecandidate = Dio();
   Dio dioAnswer = Dio();
@@ -73,7 +69,11 @@ class _CallScreenState extends State<CallScreen> {
   RTCPeerConnection? creatorConnection;
   Map managerData = {};
   int selectedTab = 0;
-
+  int selectedLanguage = 0;
+  bool isSelected = true;
+  Color colorLanguage = AppColors.grey;
+  final GlobalKey _formKey = GlobalKey();
+  ManagerListModel? modelManager;
   List<Map> itemsManager = [
     {
       'image': 'assets/managers_photo/photo_1.png',
@@ -129,10 +129,10 @@ class _CallScreenState extends State<CallScreen> {
         localVideo: _localRTCVideoRenderer,
         remoteVideo: _remoteRTCVideoRenderer,
         remoteVideoScreen: _remoteRTCVideoRendererScreen,
-        pageViewController: pageViewController,
+        pageViewController: pageViewExpectation,
       ),
     );
-    pageViewControllerLocal.animateToPage(
+    callPageView.animateToPage(
       0,
       duration: const Duration(milliseconds: 100),
       curve: Curves.ease,
@@ -156,12 +156,14 @@ class _CallScreenState extends State<CallScreen> {
   //       },
   //     ),
   //   );
-  //     ManagerListModel model =ManagerListModel.fromJson(response.data);
+  //   ManagerListModel model = ManagerListModel.fromJson(response.data);
+  //   modelManager   = model;
+  //   log(response.data);
   // }
 
   creator() async {
     Response responceCreate = await dioCreate.post(
-      'http://192.168.0.200:3000/meeting',
+      'http://79.142.54.85:3000/meeting',
     );
     MeetingModel meetingModel = MeetingModel.fromJson(responceCreate.data);
     meetingModelSend = meetingModel;
@@ -182,7 +184,7 @@ class _CallScreenState extends State<CallScreen> {
 
     creatorConnection!.onIceCandidate = (event) async {
       await dioIcecandidate.post(
-        'http://192.168.0.200:3000/post_icecandidate',
+        'http://79.142.54.85:3000/post_icecandidate',
         data: {
           'id': meetingModelSend?.id ?? '',
           'id_room': meetingModelSend?.idRoom ?? '',
@@ -200,9 +202,11 @@ class _CallScreenState extends State<CallScreen> {
     };
 
     creatorConnection!.onDataChannel = (RTCDataChannel channel) {
+      log(channel.label.toString());
       if (channel.label == 'ping-pong') {
         _dataChannel = channel;
         _dataChannel!.onMessage = (RTCDataChannelMessage message) {
+          log('pong');
           if (message.text == 'pong') {}
         };
       } else if (channel.label == 'track_labels') {
@@ -231,8 +235,9 @@ class _CallScreenState extends State<CallScreen> {
       } else if (channel.label == "leave") {
         _dataChannel2 = channel;
         _dataChannel2!.onMessage = (RTCDataChannelMessage message) {
+          log('close call');
           setState(() {
-            pageViewController.animateToPage(
+            pageViewExpectation.animateToPage(
               1,
               duration: const Duration(milliseconds: 100),
               curve: Curves.ease,
@@ -241,12 +246,16 @@ class _CallScreenState extends State<CallScreen> {
         };
       } else if (channel.label == "client_info") {
         _dataChannel3 = channel;
-
         _dataChannel3!.onMessage = (RTCDataChannelMessage message) {
+          log('clien state');
           setState(() {
             managerData = json.decode(message.text);
           });
-          navigatorFunction();
+          log(message.text);
+          if (message.text != '{}') {
+            log('navigator true');
+            navigatorFunction();
+          }
         };
       }
     };
@@ -277,7 +286,7 @@ class _CallScreenState extends State<CallScreen> {
     );
 
     await dioAnswer.post(
-      "http://192.168.0.200:3000/post_answer",
+      "http://79.142.54.85:3000/post_answer",
       data: {
         'id': meetingModelSend?.id ?? '',
         'id_room': meetingModelSend?.idRoom ?? '',
@@ -296,6 +305,25 @@ class _CallScreenState extends State<CallScreen> {
         // Handle error, this will be rejected very often
       }
     }
+    // if (creatorConnection != null) {
+    //   creatorConnection!.onIceConnectionState = (state) {
+    //     log(creatorConnection!.iceConnectionState.toString());
+
+    //     switch (state) {
+    //       case RTCIceConnectionState.RTCIceConnectionStateChecking:
+    //         break;
+
+    //       case RTCIceConnectionState.RTCIceConnectionStateDisconnected:
+    //         break;
+
+    //       case RTCIceConnectionState.RTCIceConnectionStateConnected:
+    //         break;
+
+    //       default:
+    //         break;
+    //     }
+    //   };
+    // }
   }
 
   var maskFormatter = MaskTextInputFormatter(
@@ -314,7 +342,7 @@ class _CallScreenState extends State<CallScreen> {
       child: Scaffold(
         body: PageView(
           physics: const NeverScrollableScrollPhysics(),
-          controller: pageViewControllerLocal,
+          controller: callPageView,
           children: [
             Stack(
               children: [
@@ -335,45 +363,67 @@ class _CallScreenState extends State<CallScreen> {
                         ),
                         color: Colors.white,
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             SvgPicture.asset('assets/logo.svg'),
                             const Spacer(),
-                            PopupMenuButton(
-                              offset: const Offset(0, 40),
-                              onSelected: (value) {
-                                setState(() {
-                                  language = value.countryCode;
-                                });
-                                Provider.of<LocaleProvider>(context,
-                                        listen: false)
-                                    .setLocale(value);
-                              },
-                              itemBuilder: (BuildContext context) {
-                                return AllLocales.all.map((Locale choice) {
-                                  language = choice.countryCode;
-                                  return PopupMenuItem<Locale>(
-                                    value: choice,
-                                    child: Text(
-                                      choice.countryCode!,
-                                    ),
+                            SizedBox(
+                              width: 250,
+                              height: 40,
+                              child: Selector<LocaleProvider, Locale>(
+                                selector: (context, provider) =>
+                                    provider.locale,
+                                builder: (context, currentLocale, _) {
+                                  return ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: AllLocales.all.length,
+                                    itemBuilder:
+                                        (BuildContext context, int index) {
+                                      Locale choice = AllLocales.all[index];
+                                      bool isSelected =
+                                          index == selectedLanguage;
+
+                                      return InkWell(
+                                        onTap: () {
+                                          Provider.of<LocaleProvider>(context,
+                                                  listen: false)
+                                              .setLocale(choice);
+                                          setState(() {
+                                            selectedLanguage = index;
+                                          });
+                                        },
+                                        child: Container(
+                                          margin:
+                                              const EdgeInsets.only(right: 10),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            color: isSelected
+                                                ? AppColors.orange
+                                                : colorLanguage,
+                                            border: Border.all(
+                                              color: AppColors.grey2,
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 24, vertical: 5),
+                                          child: Text(
+                                            choice.countryCode!,
+                                            style: TextStyle(
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   );
-                                }).toList();
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    color: AppColors.grey2,
-                                    border: Border.all(color: AppColors.grey2)),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 5),
-                                child: Text(
-                                  language ??
-                                      AppLocalizations.of(context)!.language,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w300,
-                                  ),
-                                ),
+                                },
                               ),
                             ),
                           ],
@@ -388,7 +438,6 @@ class _CallScreenState extends State<CallScreen> {
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 120),
                             child: Text(
-                              // 'Закажите кухню своей мечты',
                               AppLocalizations.of(context)!.main_appbar,
                               style: const TextStyle(
                                 fontSize: 64,
@@ -404,9 +453,7 @@ class _CallScreenState extends State<CallScreen> {
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 169),
                             child: Text(
-                              // 'Устали от старой кухни? Закажите новую у нас! Нажмите на большую оранжевую кнопку и получите консультацию от нашего менеджера продаж. Он создаст проект кухни для вас и покажет рендер будущей кухни. Закажите кухню сегодня и наслаждайтесь ею уже завтра!',
                               AppLocalizations.of(context)!.main_description,
-
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w400,
@@ -445,7 +492,6 @@ class _CallScreenState extends State<CallScreen> {
                           const SizedBox(
                             height: 50,
                           ),
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -459,7 +505,7 @@ class _CallScreenState extends State<CallScreen> {
                               ),
                               const SizedBox(
                                 width: 36,
-                              ), 
+                              ),
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(3),
@@ -541,155 +587,213 @@ class _CallScreenState extends State<CallScreen> {
                               const Spacer(),
                             ],
                           ),
-                          // const SizedBox(
-                          //   height: 100,
-                          // ),
                           InkWell(
                             onTap: () {
                               showCupertinoModalPopup(
                                 context: context,
-                                builder: (context) => Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 40,
-                                    right: 40,
-                                    bottom: 500,
-                                  ),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 68, vertical: 60),
-                                      decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(12)),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            // 'Укажите  ваш номер телефона',
-                                            AppLocalizations.of(context)!
-                                                .modal_appbar,
-                                            style: const TextStyle(
-                                              fontSize: 64,
-                                              fontWeight: FontWeight.w300,
+                                builder: (context) => Form(
+                                  key: _formKey,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 40,
+                                      right: 40,
+                                      bottom: 500,
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 68, vertical: 60),
+                                        decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(12)),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              AppLocalizations.of(context)!
+                                                  .modal_appbar,
+                                              style: const TextStyle(
+                                                fontSize: 64,
+                                                fontWeight: FontWeight.w300,
+                                              ),
+                                              textAlign: TextAlign.center,
                                             ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          const SizedBox(
-                                            height: 24,
-                                          ),
-                                          Text(
-                                            AppLocalizations.of(context)!
-                                                .modal_description,
-                                            style: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.w300,
+                                            const SizedBox(
+                                              height: 24,
                                             ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          const SizedBox(
-                                            height: 97,
-                                          ),
-                                          BrTextField(
-                                            controller: controller,
-                                            placeholder: '+_ (___) ___-__-__',
-                                            inputFormatters: [maskFormatter],
-                                            labelStyle: TextStyles.body
-                                                .copyWith(
-                                                    color: AppColors.grey),
-                                            textInputType: const TextInputType
-                                                .numberWithOptions(),
-                                          ),
-                                          const SizedBox(
-                                            height: 36,
-                                          ),
-                                          Text(
-                                            AppLocalizations.of(context)!
-                                                .modal_contract,
-                                            style: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.w400,
-                                              color: Colors.orange,
+                                            Text(
+                                              AppLocalizations.of(context)!
+                                                  .modal_description,
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w300,
+                                              ),
+                                              textAlign: TextAlign.center,
                                             ),
-                                          ),
-                                          const SizedBox(
-                                            height: 97,
-                                          ),
-                                          const BrDivider(),
-                                          const SizedBox(
-                                            height: 60,
-                                          ),
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: BrButton(
-                                                  color: Colors.white,
-                                                  textColor: Colors.black,
-                                                  borderColor: Colors.grey,
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                  },
-                                                  label: AppLocalizations.of(
-                                                          context)!
-                                                      .modal_button_close,
+                                            const SizedBox(
+                                              height: 97,
+                                            ),
+                                            BrTextField(
+                                              validator: (password) {
+                                                if (password == null ||
+                                                    password.trim().isEmpty) {
+                                                  return 'Поле должно быть заполнено';
+                                                } else {
+                                                  // bool isValid = password.trim().length >= 8;
+                                                  // return isValid ? null : 'Пароль слишком короткий';
+                                                }
+                                                return null;
+                                              },
+                                              controller: controllerNumber,
+                                              placeholder: '+_ (___) ___-__-__',
+                                              inputFormatters: [maskFormatter],
+                                              hintStyle: TextStyles.body
+                                                  .copyWith(
+                                                      color: AppColors.grey3
+                                                          .withOpacity(0.5)),
+                                              textInputType: const TextInputType
+                                                  .numberWithOptions(),
+                                            ),
+                                            const SizedBox(
+                                              height: 15,
+                                            ),
+                                            BrTextField(
+                                              // validator: (password) {
+                                              //   if (password == null ||
+                                              //       password.trim().isEmpty) {
+                                              //     return 'Поле должно быть заполнено';
+                                              //   } else {
+                                              //     // bool isValid = password.trim().length >= 8;
+                                              //     // return isValid ? null : 'Пароль слишком короткий';
+                                              //   }
+                                              //   return null;
+                                              // },
+                                              controller: controllerName,
+                                              placeholder: 'Имя',
+                                              hintStyle: TextStyles.body
+                                                  .copyWith(
+                                                      color: AppColors.grey3
+                                                          .withOpacity(0.5)),
+                                            ),
+                                            const SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text(
+                                              '   *Необязательно',
+                                              style: TextStyles.description
+                                                  .copyWith(
+                                                      color: AppColors.orange1,
+                                                      fontWeight:
+                                                          FontWeight.w500),
+                                            ),
+                                            const SizedBox(
+                                              height: 36,
+                                            ),
+                                            Text(
+                                              AppLocalizations.of(context)!
+                                                  .modal_contract,
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w400,
+                                                color: Colors.orange,
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              height: 97,
+                                            ),
+                                            const BrDivider(),
+                                            const SizedBox(
+                                              height: 60,
+                                            ),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: BrButton(
+                                                    color: Colors.white,
+                                                    textColor: Colors.black,
+                                                    borderColor: Colors.grey,
+                                                    onPressed: () {
+                                                      Navigator.pop(context);
+                                                      controllerNumber.clear();
+                                                      controllerName.clear();
+                                                    },
+                                                    label: AppLocalizations.of(
+                                                            context)!
+                                                        .modal_button_close,
+                                                  ),
                                                 ),
-                                              ),
-                                              const SizedBox(
-                                                width: 60,
-                                              ),
-                                              Expanded(
-                                                child: BrButton(
-                                                  onPressed: () async {
-                                                    pageViewControllerLocal
-                                                        .animateToPage(
-                                                      1,
-                                                      duration: const Duration(
-                                                          milliseconds: 100),
-                                                      curve: Curves.ease,
+                                                const SizedBox(
+                                                  width: 60,
+                                                ),
+                                                BlocConsumer<CallCubit,
+                                                    CallState>(
+                                                  listener: (context, state) {
+                                                    if (state is CallLoaded) {
+                                                      callPageView
+                                                          .animateToPage(
+                                                        1,
+                                                        duration:
+                                                            const Duration(
+                                                                milliseconds:
+                                                                    100),
+                                                        curve: Curves.ease,
+                                                      );
+                                                      Navigator.pop(context);
+                                                      controllerNumber.clear();
+                                                      controllerName.clear();
+                                                    }
+                                                  },
+                                                  builder: (context, state) {
+                                                    return Expanded(
+                                                      child: BrButton(
+                                                        onPressed:
+                                                            state is CallLoading
+                                                                ? null
+                                                                : () {
+                                                                    FormState?
+                                                                        formState =
+                                                                        _formKey.currentState
+                                                                            as FormState;
+                                                                    if (formState
+                                                                        .validate()) {
+                                                                      context
+                                                                          .read<
+                                                                              CallCubit>()
+                                                                          .startCall(
+                                                                            controllerNumber.text.trim(),
+                                                                            SignallingService.instance.socket!.id ??
+                                                                                '',
+                                                                            meetingModelSend?.idRoom ??
+                                                                                'null',
+                                                                            controllerName.text,
+                                                                          );
+                                                                      context
+                                                                          .read<
+                                                                              ConnectCubit>()
+                                                                          .connect(
+                                                                            controllerNumber.text.trim(),
+                                                                            SignallingService.instance.socket!.id ??
+                                                                                '',
+                                                                            meetingModelSend?.idRoom ??
+                                                                                'null',
+                                                                          );
+                                                                    }
+                                                                  },
+                                                        label: AppLocalizations
+                                                                .of(context)!
+                                                            .modal_button_send,
+                                                      ),
                                                     );
-                                                    context
-                                                        .read<CallCubit>()
-                                                        .startCall(
-                                                          controller.text
-                                                              .trim(),
-                                                          SignallingService
-                                                                  .instance
-                                                                  .socket!
-                                                                  .id ??
-                                                              '',
-                                                          meetingModelSend
-                                                                  ?.idRoom ??
-                                                              'null',
-                                                        );
-                                                    context
-                                                        .read<ConnectCubit>()
-                                                        .connect(
-                                                          controller.text
-                                                              .trim(),
-                                                          SignallingService
-                                                                  .instance
-                                                                  .socket!
-                                                                  .id ??
-                                                              '',
-                                                          meetingModelSend
-                                                                  ?.idRoom ??
-                                                              'null',
-                                                        );
-                                                    Navigator.pop(context);
-
-                                                    controller.clear();
                                                   },
-                                                  label: AppLocalizations.of(
-                                                          context)!
-                                                      .modal_button_send,
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -844,7 +948,7 @@ class _CallScreenState extends State<CallScreen> {
 
   @override
   void dispose() {
-    controller.clear();
+    controllerNumber.clear();
 
     super.dispose();
   }

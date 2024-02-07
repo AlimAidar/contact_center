@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer';
-
 import 'package:card_swiper/card_swiper.dart';
 import 'package:contact_center/src/common/blocks/cubit/cubit/update_id_cubit.dart';
 import 'package:contact_center/src/common/constants/color_constants.dart';
@@ -9,7 +8,6 @@ import 'package:contact_center/src/common/widgets/br_button.dart';
 import 'package:contact_center/src/common/widgets/br_text_field.dart';
 import 'package:contact_center/src/common/widgets/gradient_selected_tabs.dart';
 import 'package:contact_center/src/screens/review/widgets/review_widget.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -67,8 +65,6 @@ closeExpaction(
 int textType = 0;
 
 class _ExpectationScreenState extends State<ExpectationScreen> {
-  Dio dioCreate = Dio();
-
   List<Map> imagesMaterial = [
     {
       'image': 'assets/materials/black_mramor.png',
@@ -135,7 +131,6 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
   final PageController pageViewController2 = PageController();
   static const _timerDuration = 5;
   final StreamController _timerStream = StreamController<int>();
-  int? timerCounter;
   Timer? _resendCodeTimer;
   final FocusNode _focusNode = FocusNode();
   int selectedIndex = 0;
@@ -388,11 +383,14 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
                           BlocListener<UpdateIdCubit, UpdateIdState>(
                             listener: (context, state) {
                               if (state is UpdateIdLoaded) {
-                                widget.pageViewController.animateToPage(
-                                  1,
-                                  duration: const Duration(milliseconds: 100),
-                                  curve: Curves.ease,
-                                );
+                                log('Rabotau');
+                                setState(() {
+                                  widget.pageViewController.animateToPage(
+                                    1,
+                                    duration: const Duration(milliseconds: 100),
+                                    curve: Curves.ease,
+                                  );
+                                });
                               }
                             },
                             child: Positioned(
@@ -780,15 +778,6 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
                             );
                           },
                         ),
-                        // BrButton(
-                        //   onPressed: () {
-                        //     Timer.periodic(const Duration(seconds: 5), (timer) {
-                        //       Navigator.pop(context);
-                        //     });
-                        //   },
-                        //   label: AppLocalizations.of(context)!
-                        //       .review_very_bad_send,
-                        // )
                       ],
                     ),
                   ),

@@ -19,7 +19,7 @@ class BrTextField extends StatelessWidget {
     this.textInputType,
     this.prefixIcon,
     this.isExpanded = false,
-    this.focusNode,
+    this.focusNode, this.hintStyle,
   }) : super(key: key);
 
   final String? placeholder;
@@ -35,6 +35,7 @@ class BrTextField extends StatelessWidget {
   final Color? borderColor;
   final Color? enableBorderColor;
   final TextStyle? labelStyle;
+  final TextStyle? hintStyle;
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? textInputType;
   final bool isExpanded;
@@ -88,6 +89,7 @@ class BrTextField extends StatelessWidget {
           ),
           fillColor: Colors.orange,
           hintText: placeholder,
+          hintStyle: hintStyle
         ),
       ),
     );

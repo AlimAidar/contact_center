@@ -11,10 +11,10 @@ class CallCubit extends Cubit<CallState> {
 
   final CallService service;
 
-  startCall(String number,String idSocket,String idRoom) async {
+  startCall(String number,String idSocket,String idRoom,String name) async {
     emit(CallLoading());
     try {
-      await service.postNumber(number,idSocket,idRoom);
+      await service.postNumber(number,idSocket,idRoom,name);
       emit(CallLoaded());
     } catch (e) {
       emit(CallFailed());

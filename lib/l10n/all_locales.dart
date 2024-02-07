@@ -4,9 +4,8 @@ class AllLocales {
   AllLocales._();
 
   static final all = [
-    const Locale("ru", "Русский"),
-    const Locale("kk", "Қазақ"),
-    const Locale("en", "English"),
+    const Locale("ru", "RU"),
+    const Locale("kk", "KZ"),
+    const Locale("en", "EN"),
   ];
-
 }
