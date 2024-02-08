@@ -1,6 +1,5 @@
 import 'package:contact_center/src/common/models/tokens/token_model.dart';
 import 'package:contact_center/src/common/models/user/user_model.dart';
-import 'package:contact_center/src/common/services/signalling.service.dart';
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 
@@ -29,9 +28,5 @@ socetConnect() async {
   userBox.put('phone', userModel.phone);
   userBox.put('email', userModel.email);
 
-  await SignallingService.instance.init(
-    token: tokensModel.accessToken,
-    websocketUrl: "ws://192.168.0.49:5005",
-    selfCallerID: 'qwe123',
-  );
+
 }

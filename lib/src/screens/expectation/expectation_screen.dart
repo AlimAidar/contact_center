@@ -8,6 +8,7 @@ import 'package:contact_center/src/common/widgets/br_button.dart';
 import 'package:contact_center/src/common/widgets/br_text_field.dart';
 import 'package:contact_center/src/common/widgets/gradient_selected_tabs.dart';
 import 'package:contact_center/src/screens/review/widgets/review_widget.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -391,6 +392,30 @@ class _ExpectationScreenState extends State<ExpectationScreen> {
                                     curve: Curves.ease,
                                   );
                                 });
+                              } else if (state is UpdateIdFailed) {
+                                showCupertinoModalPopup(
+                                  context: context,
+                                  builder: (context) {
+                                    return CupertinoAlertDialog(
+                                      title: const Text('Ошибка'),
+                                      content: Text(state.message),
+                                      actions: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 15,
+                                            vertical: 15,
+                                          ),
+                                          child: BrButton(
+                                            label: 'Ok',
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
                               }
                             },
                             child: Positioned(

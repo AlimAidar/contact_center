@@ -9,4 +9,7 @@ final class UpdateIdLoading extends UpdateIdState {}
 
 final class UpdateIdLoaded extends UpdateIdState {}
 
-final class UpdateIdFailed extends UpdateIdState {}
+final class UpdateIdFailed extends UpdateIdState {
+  UpdateIdFailed({required this.message});
+  final String message;
+}

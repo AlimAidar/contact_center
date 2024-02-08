@@ -2,6 +2,7 @@
 
 import 'package:bloc/bloc.dart';
 import 'package:contact_center/src/common/services/update_id/update_id_service.dart';
+import 'package:dio/dio.dart';
 import 'package:meta/meta.dart';
 
 part 'update_id_state.dart';
@@ -11,13 +12,14 @@ class UpdateIdCubit extends Cubit<UpdateIdState> {
 
   final UpdateIdService service;
 
-  updateSocket(String idSocket,String idRoom) async {
+  updateSocket(String idSocket, String idRoom) async {
     emit(UpdateIdLoading());
     try {
-      await service.updateId(idSocket,idRoom);
+      await service.updateId(idSocket, idRoom);
       emit(UpdateIdLoaded());
-    } catch (e) {
-      emit(UpdateIdFailed());
+    } on DioException catch (e) {
+      emit(UpdateIdFailed(
+          message: e.response != null ? e.response?.data : 'UNKNOWN_ERROR'));
     }
   }
 }

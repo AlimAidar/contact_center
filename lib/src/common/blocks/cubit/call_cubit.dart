@@ -2,6 +2,7 @@
 
 import 'package:bloc/bloc.dart';
 import 'package:contact_center/src/common/services/call/call_service.dart';
+import 'package:dio/dio.dart';
 import 'package:meta/meta.dart';
 
 part 'call_state.dart';
@@ -11,13 +12,17 @@ class CallCubit extends Cubit<CallState> {
 
   final CallService service;
 
-  startCall(String number,String idSocket,String idRoom,String name) async {
+  startCall(String number, String idRoom, String name) async {
     emit(CallLoading());
     try {
-      await service.postNumber(number,idSocket,idRoom,name);
+      await service.postNumber(number, idRoom, name);
       emit(CallLoaded());
-    } catch (e) {
-      emit(CallFailed());
+    } on DioException catch (e) {
+      emit(
+        CallFailed(
+          message: e.response != null ? e.response?.data : 'UNKNOWN_ERROR',
+        ),
+      );
     }
   }
 }
