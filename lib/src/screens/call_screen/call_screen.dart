@@ -609,9 +609,9 @@ class _CallScreenState extends State<CallScreen> {
                                             borderRadius:
                                                 BorderRadius.circular(12)),
                                         child: Column(
+                                          mainAxisSize: MainAxisSize.min,
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
                                               AppLocalizations.of(context)!
@@ -745,6 +745,38 @@ class _CallScreenState extends State<CallScreen> {
                                                       Navigator.pop(context);
                                                       controllerNumber.clear();
                                                       controllerName.clear();
+                                                    } else if (state
+                                                        is CallFailed) {
+                                                      showCupertinoModalPopup(
+                                                        context: context,
+                                                        builder: (context) {
+                                                          return CupertinoAlertDialog(
+                                                            title: const Text(
+                                                                'Ошибка'),
+                                                            content: Text(
+                                                                state.message),
+                                                            actions: [
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .symmetric(
+                                                                  horizontal:
+                                                                      15,
+                                                                  vertical: 15,
+                                                                ),
+                                                                child: BrButton(
+                                                                  label: 'Ok',
+                                                                  onPressed:
+                                                                      () {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  },
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          );
+                                                        },
+                                                      );
                                                     }
                                                   },
                                                   builder: (context, state) {
@@ -765,8 +797,6 @@ class _CallScreenState extends State<CallScreen> {
                                                                               CallCubit>()
                                                                           .startCall(
                                                                             controllerNumber.text.trim(),
-                                                                            SignallingService.instance.socket!.id ??
-                                                                                '',
                                                                             meetingModelSend?.idRoom ??
                                                                                 'null',
                                                                             controllerName.text,
@@ -776,8 +806,6 @@ class _CallScreenState extends State<CallScreen> {
                                                                               ConnectCubit>()
                                                                           .connect(
                                                                             controllerNumber.text.trim(),
-                                                                            SignallingService.instance.socket!.id ??
-                                                                                '',
                                                                             meetingModelSend?.idRoom ??
                                                                                 'null',
                                                                           );

@@ -10,10 +10,10 @@ class ConnectCubit extends Cubit<ConnectState> {
   ConnectCubit({required this.service}) : super(ConnectInitial());
   final ConnectService service;
 
-  connect(String number, String idSocket, String idRoom) async {
+  connect(String number, String idRoom) async {
     emit(ConnectLoading());
     try {
-      await service.connect(number, idSocket,idRoom);
+      await service.connect(number, idRoom);
       emit(ConnectLoaded());
     } catch (e) {
       emit(ConnectFailed());

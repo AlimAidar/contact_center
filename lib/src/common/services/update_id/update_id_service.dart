@@ -18,7 +18,7 @@ class UpdateIdServiceImplement extends UpdateIdService {
         '/api/call/session/status/update',
         queryParameters: {
           'id_room': idRoom,
-          'id_socket': idSoket,
+          'id_socket': '123',
         },
       );
     } catch (e) {
