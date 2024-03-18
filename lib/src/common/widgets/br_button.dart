@@ -15,6 +15,7 @@ class BrButton extends StatelessWidget {
     this.borderColor,
     this.icon = '',
     this.suffixIcon,
+    this.preffixIcon,
   })  : isFilled = true,
         size = 0,
         iconColor = null,
@@ -30,6 +31,7 @@ class BrButton extends StatelessWidget {
     this.textStyle,
     this.borderColor,
     this.suffixIcon,
+    this.preffixIcon,
   })  : color = Colors.transparent,
         isFilled = false,
         padding = EdgeInsets.zero,
@@ -56,11 +58,13 @@ class BrButton extends StatelessWidget {
     this.size = 40,
     this.iconSize = 14,
     this.suffixIcon,
+    this.preffixIcon,
   })  : isFilled = true,
         super(key: key);
 
   final String icon;
   final Widget? suffixIcon;
+  final Widget? preffixIcon;
   final Color? iconColor;
   final String label;
   final Widget? labelWidget;
@@ -137,10 +141,11 @@ class BrButton extends StatelessWidget {
                 label,
                 maxLines: 1,
                 style: onPressed != null
-                    ? TextStyle(
-                        fontSize: 24,
-                        color: textColor,
-                        fontWeight: FontWeight.w600)
+                    ? textStyle ??
+                        TextStyle(
+                            fontSize: 24,
+                            color: textColor,
+                            fontWeight: FontWeight.w600)
                     : const TextStyle(
                         fontSize: 24,
                         color: Colors.grey,
@@ -149,7 +154,11 @@ class BrButton extends StatelessWidget {
               ),
               const SizedBox(
                 width: 12,
-              )
+              ),
+              preffixIcon ?? const Offstage(),
+              const SizedBox(
+                width: 12,
+              ),
             ],
           ),
     );

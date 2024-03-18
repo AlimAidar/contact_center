@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:contact_center/src/common/blocks/cubit/auth_cubit.dart';
 import 'package:contact_center/src/common/models/manager/manager_list_model.dart';
+import 'package:contact_center/src/common/models/tokens/manager_token.dart';
 import 'package:contact_center/src/common/services/signalling.service.dart';
-import 'package:contact_center/src/common/local/function/soket_connect.dart';
 import 'package:contact_center/src/common/models/meeting/meeting_model.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:contact_center/l10n/all_locales.dart';
@@ -16,6 +18,7 @@ import 'package:contact_center/src/common/router/routing_constant.dart';
 import 'package:contact_center/src/common/widgets/br_button.dart';
 import 'package:contact_center/src/common/widgets/br_divider.dart';
 import 'package:contact_center/src/common/widgets/br_text_field.dart';
+import 'package:contact_center/src/screens/expectation/expectation_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -41,6 +44,13 @@ class _CallScreenState extends State<CallScreen> {
     'assets/gallery/gellary_item_1.png',
     'assets/gallery/gellary_item_2.png',
     'assets/gallery/gellary_item_3.png',
+  ];
+  List<String> helpImages = [
+    'assets/help_1.png',
+    'assets/help_2.png',
+    'assets/help_3.png',
+    'assets/help_4.png',
+    'assets/help_5.png',
   ];
   TextEditingController controllerNumber = TextEditingController();
   TextEditingController controllerName = TextEditingController();
@@ -73,33 +83,37 @@ class _CallScreenState extends State<CallScreen> {
   bool isSelected = true;
   Color colorLanguage = AppColors.grey;
   final GlobalKey _formKey = GlobalKey();
-  ManagerListModel? modelManager;
-  List<Map> itemsManager = [
-    {
-      'image': 'assets/managers_photo/photo_1.png',
-      'name': 'Айжан Шулембаева',
-    },
-    {
-      'image': 'assets/managers_photo/photo_2.png',
-      'name': 'Айжан Шулембаева',
-    },
-    {
-      'image': 'assets/managers_photo/photo_3.png',
-      'name': 'Айжан Шулембаева',
-    },
-    {
-      'image': 'assets/managers_photo/photo_4.png',
-      'name': 'Айжан Шулембаева',
-    },
-    {
-      'image': 'assets/managers_photo/photo_5.png',
-      'name': 'Айжан Шулембаева',
-    },
-  ];
+  List<ManagerListModel>? modelManager;
+  List<ManagerListModel>? modelManagerGroup;
+  List<ManagerListModel>? modelManagerFilterPhoto;
+  // List<Map> itemsManager = [
+  //   {
+  //     'image': 'assets/managers_photo/photo_1.png',
+  //     'name': 'Айжан Шулембаева',
+  //   },
+  //   {
+  //     'image': 'assets/managers_photo/photo_2.png',
+  //     'name': 'Айжан Шулембаева',
+  //   },
+  //   {
+  //     'image': 'assets/managers_photo/photo_3.png',
+  //     'name': 'Айжан Шулембаева',
+  //   },
+  //   {
+  //     'image': 'assets/managers_photo/photo_4.png',
+  //     'name': 'Айжан Шулембаева',
+  //   },
+  //   {
+  //     'image': 'assets/managers_photo/photo_5.png',
+  //     'name': 'Айжан Шулембаева',
+  //   },
+  // ];
 
   @override
   void initState() {
-    socetConnect();
+    context.read<AuthCubit>().authFunc('touchpoint_user', 'YhvydD');
+    managerList();
+    // socetConnect();
     // managerList();
     _localRTCVideoRenderer.initialize();
     _remoteRTCVideoRendererScreen.initialize();
@@ -139,27 +153,37 @@ class _CallScreenState extends State<CallScreen> {
     );
   }
 
-  // managerList() async {
-  //   Response res = await dioManager.post(
-  //     'http://192.168.0.49:8080/api/login',
-  //     queryParameters: {
-  //       'login': 'test',
-  //       'password': 'Admin0912',
-  //     },
-  //   );
-  //   ManagerTokenModel token = ManagerTokenModel.fromJson(res.data);
-  //   Response response = await dioManagerList.get(
-  //     'http://192.168.0.49:8080/api/workflow/users',
-  //     options: Options(
-  //       headers: {
-  //         'Authorization': 'Bearer ${token.accessToken}',
-  //       },
-  //     ),
-  //   );
-  //   ManagerListModel model = ManagerListModel.fromJson(response.data);
-  //   modelManager   = model;
-  //   log(response.data);
-  // }
+  managerList() async {
+    Response res = await dioManager.post(
+      'http://185.146.3.144:8080/api/login',
+      queryParameters: {
+        'login': 'test',
+        'password': 'Pas\$!890',
+      },
+    );
+    ManagerTokenModel token = ManagerTokenModel.fromJson(res.data);
+    Response response = await dioManagerList.get(
+      'http://185.146.3.144:8080/api/workflow/users',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer ${token.accessToken}',
+        },
+      ),
+    );
+    modelManager = (response.data as List)
+        .map((json) => ManagerListModel.fromJson(json))
+        .toList();
+
+    modelManagerFilterPhoto =
+        modelManager!.where((element) => element.user.photo != null).toList();
+    modelManagerGroup = modelManagerFilterPhoto!
+        .where(
+            (element) => element.idGroup == 15 && element.user.verified == true)
+        .toList();
+
+    log('$modelManagerFilterPhoto                                                                                                Response                                                         ');
+    log('$modelManagerGroup                                                                                            Filter Work                                                                ');
+  }
 
   creator() async {
     Response responceCreate = await dioCreate.post(
@@ -305,25 +329,25 @@ class _CallScreenState extends State<CallScreen> {
         // Handle error, this will be rejected very often
       }
     }
-    // if (creatorConnection != null) {
-    //   creatorConnection!.onIceConnectionState = (state) {
-    //     log(creatorConnection!.iceConnectionState.toString());
+    if (creatorConnection != null) {
+      creatorConnection!.onIceConnectionState = (state) {
+        log(creatorConnection!.iceConnectionState.toString());
 
-    //     switch (state) {
-    //       case RTCIceConnectionState.RTCIceConnectionStateChecking:
-    //         break;
+        switch (state) {
+          case RTCIceConnectionState.RTCIceConnectionStateChecking:
+            break;
 
-    //       case RTCIceConnectionState.RTCIceConnectionStateDisconnected:
-    //         break;
+          case RTCIceConnectionState.RTCIceConnectionStateDisconnected:
+            break;
 
-    //       case RTCIceConnectionState.RTCIceConnectionStateConnected:
-    //         break;
+          case RTCIceConnectionState.RTCIceConnectionStateConnected:
+            break;
 
-    //       default:
-    //         break;
-    //     }
-    //   };
-    // }
+          default:
+            break;
+        }
+      };
+    }
   }
 
   var maskFormatter = MaskTextInputFormatter(
@@ -332,9 +356,13 @@ class _CallScreenState extends State<CallScreen> {
   );
 
   int count = 0;
+  int helpCount = 0;
+  bool autoPlay = true;
+  bool helpModal = false;
   String? language;
 
   final SwiperController _swiperController = SwiperController();
+  final SwiperController helpSwiperController = SwiperController();
 
   @override
   Widget build(BuildContext context) {
@@ -475,7 +503,7 @@ class _CallScreenState extends State<CallScreen> {
                               },
                               scale: 0.9,
                               viewportFraction: 0.6,
-                              autoplay: true,
+                              autoplay: autoPlay,
                               itemCount: images.length,
                               itemBuilder: (context, index) {
                                 return Container(
@@ -498,6 +526,9 @@ class _CallScreenState extends State<CallScreen> {
                               const Spacer(),
                               InkWell(
                                 onTap: () {
+                                  setState(() {
+                                    autoPlay = false;
+                                  });
                                   _swiperController.move(count - 1);
                                 },
                                 child:
@@ -579,6 +610,9 @@ class _CallScreenState extends State<CallScreen> {
                               ),
                               InkWell(
                                 onTap: () {
+                                  setState(() {
+                                    autoPlay = true;
+                                  });
                                   _swiperController.next();
                                 },
                                 child:
@@ -857,6 +891,291 @@ class _CallScreenState extends State<CallScreen> {
                     ],
                   ),
                 ),
+                Positioned(
+                  right: 70,
+                  bottom: 70,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        helpModal = !helpModal;
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(360),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.black.withOpacity(.1),
+                              blurRadius: 50,
+                              spreadRadius: 0,
+                              offset: const Offset(-30, 30),
+                            ),
+                          ]),
+                      padding: const EdgeInsets.all(15.5),
+                      child: Image.asset('assets/help_icon.png'),
+                    ),
+                  ),
+                ),
+                helpModal
+                    ? Container(
+                        margin: const EdgeInsets.all(35),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.black.withOpacity(.1),
+                                blurRadius: 50,
+                                spreadRadius: 0,
+                                offset: const Offset(-30, 30),
+                              ),
+                            ]),
+                        child: Column(
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  helpModal = !helpModal;
+                                });
+                              },
+                              child: Row(
+                                children: [
+                                  const Spacer(),
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 44,
+                                      vertical: 40,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(30),
+                                      color: AppColors.grey,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 13,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          AppLocalizations.of(context)!
+                                              .close_model,
+                                          style: TextStyles.body,
+                                        ),
+                                        const SizedBox(
+                                          width: 16,
+                                        ),
+                                        const Icon(
+                                          Icons.close,
+                                          color: AppColors.orange,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const BrDivider(),
+                            const SizedBox(
+                              height: 80,
+                            ),
+                            Text(
+                              AppLocalizations.of(context)!.how_work_question,
+                              style: TextStyles.head.copyWith(
+                                fontSize: 64,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 88,
+                            ),
+                            SizedBox(
+                              height: 840,
+                              child: Swiper(
+                                controller: helpSwiperController,
+                                onIndexChanged: (index) {
+                                  setState(() {
+                                    helpCount = index;
+                                  });
+                                },
+                                itemCount: helpImages.length,
+                                itemBuilder: (context2, index) {
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      image: DecorationImage(
+                                        image: AssetImage(helpImages[index]),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            Container(
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 104),
+                              color: AppColors.grey.withOpacity(0.5),
+                              child: Column(
+                                children: [
+                                  const BrDivider(
+                                    color: AppColors.grey,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 113,
+                                      vertical: 64,
+                                    ),
+                                    child: SizedBox(
+                                      width: 800,
+                                      height: 50,
+                                      child: Builder(
+                                        builder: (context) {
+                                          String helpText = '';
+
+                                          switch (helpCount) {
+                                            case 0:
+                                              helpText =
+                                                  AppLocalizations.of(context)!
+                                                      .help_description_step_1;
+                                              {}
+                                              break;
+                                            case 1:
+                                              helpText =
+                                                  AppLocalizations.of(context)!
+                                                      .help_description_step_2;
+                                              break;
+                                            case 2:
+                                              helpText =
+                                                  AppLocalizations.of(context)!
+                                                      .help_description_step_3;
+                                              break;
+                                            case 3:
+                                              helpText =
+                                                  AppLocalizations.of(context)!
+                                                      .help_description_step_4;
+                                              break;
+                                            case 4:
+                                              helpText =
+                                                  AppLocalizations.of(context)!
+                                                      .help_description_step_5;
+                                              break;
+                                            default:
+                                              helpText = '';
+                                              break;
+                                          }
+                                          return Text(
+                                            helpText,
+                                            style: TextStyles.body,
+                                            textAlign: TextAlign.center,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 50,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Spacer(),
+                                InkWell(
+                                  onTap: () {
+                                    helpSwiperController.move(helpCount - 1);
+                                  },
+                                  child: SvgPicture.asset(
+                                      'assets/left_button.svg'),
+                                ),
+                                const SizedBox(
+                                  width: 36,
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(3),
+                                    color: Colors.grey,
+                                  ),
+                                  width: 4,
+                                  height: 24,
+                                ),
+                                const SizedBox(
+                                  width: 29,
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(3),
+                                    color: Colors.grey,
+                                  ),
+                                  width: 4,
+                                  height: 40,
+                                ),
+                                const SizedBox(
+                                  width: 29,
+                                ),
+                                Text(
+                                  '${helpCount + 1}',
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const Text(
+                                  '/',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                ),
+                                Text(
+                                  helpImages.length.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 29,
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(3),
+                                    color: Colors.grey,
+                                  ),
+                                  width: 4,
+                                  height: 40,
+                                ),
+                                const SizedBox(
+                                  width: 29,
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(3),
+                                    color: Colors.grey,
+                                  ),
+                                  width: 4,
+                                  height: 24,
+                                ),
+                                const SizedBox(
+                                  width: 36,
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    helpSwiperController.next();
+                                  },
+                                  child: SvgPicture.asset(
+                                      'assets/right_button.svg'),
+                                ),
+                                const Spacer(),
+                              ],
+                            ),
+                          ],
+                        ),
+                      )
+                    : const Offstage(),
               ],
             ),
             Container(
@@ -874,7 +1193,9 @@ class _CallScreenState extends State<CallScreen> {
                         horizontal: 40, vertical: 35),
                     color: Colors.white,
                     child: Row(
-                      children: [SvgPicture.asset('assets/logo.svg')],
+                      children: [
+                        SvgPicture.asset('assets/logo.svg'),
+                       ],
                     ),
                   ),
                   const Spacer(),
@@ -932,23 +1253,26 @@ class _CallScreenState extends State<CallScreen> {
                                           : Colors.transparent,
                                     ),
                                     image: DecorationImage(
-                                      image: AssetImage(
-                                        itemsManager[index]['image'],
+                                      image: CachedNetworkImageProvider(
+                                        modelManagerGroup?[index].user.photo ??
+                                            '',
                                       ),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(
-                                  height: 150,
+                                  height: 100,
                                 ),
                                 Text(
-                                  itemsManager[index]['name'],
+                                  modelManagerGroup?[index].user.username ??
+                                      'Имя',
                                   style: TextStyle(
                                     color: selectedTab == index
                                         ? Colors.black
                                         : Colors.transparent,
                                     fontSize: 22,
                                   ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ],
                             );
@@ -956,7 +1280,7 @@ class _CallScreenState extends State<CallScreen> {
                           scale: 0,
                           viewportFraction: 0.2,
                           autoplay: true,
-                          itemCount: itemsManager.length,
+                          itemCount: modelManagerGroup?.length ?? 0,
                         ),
                       ),
                     ],
@@ -965,6 +1289,27 @@ class _CallScreenState extends State<CallScreen> {
                     height: 15,
                   ),
                   const Spacer(),
+                  BrButton(
+                    color: AppColors.grey,
+                    label: 'Отменить вызов',
+                    textStyle: TextStyles.head.copyWith(color: Colors.red),
+                    preffixIcon: SvgPicture.asset('assets/icon/call_out.svg'),
+                    onPressed: () async {
+                      await closeExpaction(
+                        context,
+                        creatorConnection!,
+                        meetingModelSend?.idRoom ?? 'null',
+                      );
+                      callPageView.animateToPage(
+                        0,
+                        duration: const Duration(milliseconds: 100),
+                        curve: Curves.ease,
+                      );
+                    },
+                  ),
+                  const SizedBox(
+                    height: 100,
+                  )
                 ],
               ),
             ),

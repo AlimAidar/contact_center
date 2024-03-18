@@ -2,7 +2,7 @@ import 'package:contact_center/src/common/dependencies/br_dio.dart';
 import 'package:dio/dio.dart';
 
 abstract class ConnectService {
-  Future<void> connect(String number,  String idRoom);
+  Future<void> connect(String number, String idRoom);
 }
 
 class ConnectServiceImplement extends ConnectService {
@@ -12,10 +12,10 @@ class ConnectServiceImplement extends ConnectService {
   late final Dio dio;
 
   @override
-  Future<void> connect(String number,  String idRoom) async {
+  Future<void> connect(String number, String idRoom) async {
     try {
-       await dio.post(
-        'websocket/manager/connect',
+      Response res = await dio.post(
+        'api/websocket/manager/connect',
         queryParameters: {
           'phone_number': number,
           'id_socket': '123',
@@ -23,6 +23,8 @@ class ConnectServiceImplement extends ConnectService {
           'id_room': idRoom,
         },
       );
+     
+      print(res);
     } catch (e) {
       rethrow;
     }

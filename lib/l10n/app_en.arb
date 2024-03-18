@@ -22,5 +22,12 @@
  "material_fartuk": "Apron",
  "material_table": "Tabletop",
  "language":"Language",
- "choice":"Choose" 
+ "choice":"Choose" ,
+ "help_description_step_1":"Selecting a language. Select a language that is comfortable for you at the top of the screen by pressing the button segment with your hand",
+ "help_description_step_2":"Contact a consultant. Press the orange call button",
+ "help_description_step_3":"Leave your details. Click on the top field and enter your number. Please enter your name in the field below. Click on the 'Continue' button",
+ "help_description_step_4":"Wait for the operator to answer so that he can help you choose a kitchen",
+ "help_description_step_5":"Evaluate the consultant's performance after the call ends",
+ "how_work_question":"How does Touch Point work?",
+ "close_model":"Close help section"
 }

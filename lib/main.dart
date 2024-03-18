@@ -1,6 +1,6 @@
 import 'package:contact_center/l10n/all_locales.dart';
 import 'package:contact_center/l10n/local_provider.dart';
-import 'package:contact_center/src/common/blocks/bloc/login_bloc.dart';
+import 'package:contact_center/src/common/blocks/cubit/auth_cubit.dart';
 import 'package:contact_center/src/common/blocks/cubit/call_cubit.dart';
 import 'package:contact_center/src/common/blocks/cubit/connect_cubit.dart';
 import 'package:contact_center/src/common/blocks/cubit/cubit/update_id_cubit.dart';
@@ -44,7 +44,7 @@ class _MyAppState extends State<MyApp> {
                 create: (context) => UpdateIdCubit(service: getIt()),
               ),
               BlocProvider(
-                create: (context) => LoginBloc(authService: getIt()),
+                create: (context) => AuthCubit(  service: getIt(),),
               ),
               BlocProvider(
                 create: (context) => CallCubit(service: getIt()),

@@ -22,6 +22,7 @@ ManagerUserModel _$ManagerUserModelFromJson(Map<String, dynamic> json) {
 mixin _$ManagerUserModel {
   String? get username => throw _privateConstructorUsedError;
   String? get photo => throw _privateConstructorUsedError;
+  bool get verified => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -35,7 +36,7 @@ abstract class $ManagerUserModelCopyWith<$Res> {
           ManagerUserModel value, $Res Function(ManagerUserModel) then) =
       _$ManagerUserModelCopyWithImpl<$Res, ManagerUserModel>;
   @useResult
-  $Res call({String? username, String? photo});
+  $Res call({String? username, String? photo, bool verified});
 }
 
 /// @nodoc
@@ -53,6 +54,7 @@ class _$ManagerUserModelCopyWithImpl<$Res, $Val extends ManagerUserModel>
   $Res call({
     Object? username = freezed,
     Object? photo = freezed,
+    Object? verified = null,
   }) {
     return _then(_value.copyWith(
       username: freezed == username
@@ -63,6 +65,10 @@ class _$ManagerUserModelCopyWithImpl<$Res, $Val extends ManagerUserModel>
           ? _value.photo
           : photo // ignore: cast_nullable_to_non_nullable
               as String?,
+      verified: null == verified
+          ? _value.verified
+          : verified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -75,7 +81,7 @@ abstract class _$$ManagerUserModelImplCopyWith<$Res>
       __$$ManagerUserModelImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String? username, String? photo});
+  $Res call({String? username, String? photo, bool verified});
 }
 
 /// @nodoc
@@ -91,6 +97,7 @@ class __$$ManagerUserModelImplCopyWithImpl<$Res>
   $Res call({
     Object? username = freezed,
     Object? photo = freezed,
+    Object? verified = null,
   }) {
     return _then(_$ManagerUserModelImpl(
       username: freezed == username
@@ -101,6 +108,10 @@ class __$$ManagerUserModelImplCopyWithImpl<$Res>
           ? _value.photo
           : photo // ignore: cast_nullable_to_non_nullable
               as String?,
+      verified: null == verified
+          ? _value.verified
+          : verified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -108,7 +119,7 @@ class __$$ManagerUserModelImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$ManagerUserModelImpl implements _ManagerUserModel {
-  _$ManagerUserModelImpl({this.username, this.photo});
+  _$ManagerUserModelImpl({this.username, this.photo, required this.verified});
 
   factory _$ManagerUserModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$ManagerUserModelImplFromJson(json);
@@ -117,10 +128,12 @@ class _$ManagerUserModelImpl implements _ManagerUserModel {
   final String? username;
   @override
   final String? photo;
+  @override
+  final bool verified;
 
   @override
   String toString() {
-    return 'ManagerUserModel(username: $username, photo: $photo)';
+    return 'ManagerUserModel(username: $username, photo: $photo, verified: $verified)';
   }
 
   @override
@@ -130,12 +143,14 @@ class _$ManagerUserModelImpl implements _ManagerUserModel {
             other is _$ManagerUserModelImpl &&
             (identical(other.username, username) ||
                 other.username == username) &&
-            (identical(other.photo, photo) || other.photo == photo));
+            (identical(other.photo, photo) || other.photo == photo) &&
+            (identical(other.verified, verified) ||
+                other.verified == verified));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, username, photo);
+  int get hashCode => Object.hash(runtimeType, username, photo, verified);
 
   @JsonKey(ignore: true)
   @override
@@ -153,8 +168,10 @@ class _$ManagerUserModelImpl implements _ManagerUserModel {
 }
 
 abstract class _ManagerUserModel implements ManagerUserModel {
-  factory _ManagerUserModel({final String? username, final String? photo}) =
-      _$ManagerUserModelImpl;
+  factory _ManagerUserModel(
+      {final String? username,
+      final String? photo,
+      required final bool verified}) = _$ManagerUserModelImpl;
 
   factory _ManagerUserModel.fromJson(Map<String, dynamic> json) =
       _$ManagerUserModelImpl.fromJson;
@@ -163,6 +180,8 @@ abstract class _ManagerUserModel implements ManagerUserModel {
   String? get username;
   @override
   String? get photo;
+  @override
+  bool get verified;
   @override
   @JsonKey(ignore: true)
   _$$ManagerUserModelImplCopyWith<_$ManagerUserModelImpl> get copyWith =>

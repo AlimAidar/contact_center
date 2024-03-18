@@ -1,9 +1,10 @@
+import 'package:contact_center/src/common/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 
 class BrDivider extends Divider {
   const BrDivider({
     Key? key,
-    Color color = Colors.grey,
+    Color color = AppColors.grey2,
     double thickness = 1,
   }) : super(
           key: key,

@@ -11,6 +11,7 @@ _$ManagerUserModelImpl _$$ManagerUserModelImplFromJson(
     _$ManagerUserModelImpl(
       username: json['username'] as String?,
       photo: json['photo'] as String?,
+      verified: json['verified'] as bool,
     );
 
 Map<String, dynamic> _$$ManagerUserModelImplToJson(
@@ -18,4 +19,5 @@ Map<String, dynamic> _$$ManagerUserModelImplToJson(
     <String, dynamic>{
       'username': instance.username,
       'photo': instance.photo,
+      'verified': instance.verified,
     };
